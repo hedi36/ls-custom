@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fiche d'Atelier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Permanent+Marker&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+  :root{
+    --bg:#0a0f1f;
+    --panel:#111a30;
+    --panel2:#16213c;
+    --line:#26355a;
+    --text:#f1f4fc;
+    --muted:#8698c0;
+    --accent:#4f8cff;
+    --accent-dim:#1c3a6e;
+    --accent2:#2dd4c8;
+    --rust:#f0576b;
+    --good:#3ddc97;
+    --good-dim:#123527;
+    --radius:14px;
+    --radius-sm:9px;
+  }
+  *{box-sizing:border-box;}
+  @keyframes driftBg{
+    0%{ background-position: 0% 0%, 100% 0%, 50% 100%, 0 0; }
+    50%{ background-position: 8% 6%, 92% 8%, 46% 92%, 0 0; }
+    100%{ background-position: 0% 0%, 100% 0%, 50% 100%, 0 0; }
+  }
+  body{
+    margin:0;
+    background:
+      radial-gradient(1100px 550px at 12% -8%, rgba(79,140,255,0.15), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(45,212,200,0.10), transparent 55%),
+      radial-gradient(900px 500px at 50% 100%, rgba(255,90,150,0.06), transparent 60%),
+      var(--bg);
+    background-size:160% 160%, 160% 160%, 160% 160%, auto;
+    animation:driftBg 26s ease-in-out infinite;
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+  }
+  @keyframes shimmerBar{
+    0%{ background-position:0% 0; }
+    100%{ background-position:200% 0; }
+  }
+  .hazard{
+    height:3px;
+    background:linear-gradient(90deg, var(--accent), var(--accent2), #ff9f43, var(--accent));
+    background-size:200% 100%;
+    animation:shimmerBar 6s linear infinite;
+  }
+  h1,h2,h3,.display{
+    font-family:'Space Grotesk', sans-serif;
+    letter-spacing:-0.01em;
+    margin:0;
+  }
+  .grad-text{
+    background:linear-gradient(90deg, #fff, var(--accent2) 55%, var(--accent));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+  .muted{ color:var(--muted); }
+
+  /* ---------- LOGIN ---------- */
+  #view-login{
+    min-height:calc(100vh - 3px);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    position:relative;
+    overflow:hidden;
+    background:
+      radial-gradient(1000px 560px at 12% -8%, rgba(255,159,67,0.45), transparent 58%),
+      radial-gradient(900px 560px at 100% 4%, rgba(255,61,129,0.38), transparent 55%),
+      radial-gradient(1000px 600px at 50% 120%, rgba(45,212,200,0.22), transparent 60%),
+      linear-gradient(160deg, #2a1240 0%, #3a1a48 35%, #1c1440 70%, #0e1230 100%);
+  }
+  @keyframes floatWall{
+    0%{ transform:rotate(-9deg) translateY(0); }
+    50%{ transform:rotate(-9deg) translateY(-14px); }
+    100%{ transform:rotate(-9deg) translateY(0); }
+  }
+  .graffiti-wall{
+    position:absolute;
+    inset:-10% -10%;
+    z-index:0;
+    display:flex;
+    flex-wrap:wrap;
+    align-content:space-around;
+    justify-content:space-around;
+    transform:rotate(-9deg);
+    pointer-events:none;
+    animation:floatWall 14s ease-in-out infinite;
+  }
+  .graffiti-wall span{
+    font-family:'Permanent Marker', cursive;
+    font-size:clamp(38px, 6vw, 74px);
+    white-space:nowrap;
+    -webkit-text-stroke:1px rgba(255,255,255,0.06);
+  }
+  .graffiti-wall span:nth-child(3n){ background:linear-gradient(90deg,#ff9f43,#ff3d81); -webkit-background-clip:text; background-clip:text; color:transparent; opacity:0.16; }
+  .graffiti-wall span:nth-child(3n+1){ background:linear-gradient(90deg,#4f8cff,#2dd4c8); -webkit-background-clip:text; background-clip:text; color:transparent; opacity:0.13; }
+  .graffiti-wall span:nth-child(3n+2){ color:#ffd27a; opacity:0.10; }
+  .login-card{ position:relative; z-index:1; }
+  .card{
+    background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.018) 0 2px, transparent 2px 7px),
+      linear-gradient(180deg, rgba(17,26,48,0.92), rgba(17,26,48,0.92) 60%, rgba(16,28,52,0.95));
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border:1px solid rgba(79,140,255,0.18);
+    border-radius:var(--radius);
+    position:relative;
+    box-shadow:0 24px 70px -20px rgba(0,0,0,0.65), 0 0 0 1px rgba(79,140,255,0.05), 0 0 40px -12px rgba(79,140,255,0.25);
+  }
+  .card::after{
+    content:'';
+    position:absolute;
+    top:12px; left:12px;
+    width:7px; height:7px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #8a97b3, #29334f 72%);
+    box-shadow:0 0 0 1px rgba(0,0,0,0.35);
+    z-index:2;
+  }
+  .login-card{
+    width:100%;
+    max-width:420px;
+    padding:36px 32px 30px;
+    overflow:hidden;
+  }
+  .login-card::before{
+    content:'$';
+    position:absolute;
+    top:-28px; right:-14px;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:150px;
+    font-weight:700;
+    color:rgba(79,140,255,0.07);
+    line-height:1;
+    pointer-events:none;
+  }
+
+  .eyebrow{
+    color:var(--accent2);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    margin-bottom:8px;
+    position:relative;
+  }
+  .login-card h1{ font-size:30px; margin-bottom:4px; font-weight:700; position:relative; }
+  .login-card p.sub{ color:var(--muted); font-size:13px; margin:0 0 24px; position:relative; }
+  .login-card label, .login-card input, .login-card select, .login-card button{ position:relative; }
+
+  label{
+    display:block;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.07em;
+    color:var(--muted);
+    margin:16px 0 6px;
+    font-weight:500;
+  }
+  input[type=text], input[type=password], input[type=number], input[type=date], input[type=week], select, textarea{
+    width:100%;
+    background:rgba(22,33,60,0.75);
+    border:1px solid var(--line);
+    border-radius:var(--radius-sm);
+    color:var(--text);
+    padding:11px 13px;
+    font-size:14px;
+    font-family:'Inter', sans-serif;
+    transition:border-color .15s ease, box-shadow .15s ease;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,0.25);
+  }
+  input:focus, select:focus, textarea:focus{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(79,140,255,0.18), inset 0 1px 2px rgba(0,0,0,0.25);
+  }
+  select{ appearance:none; }
+  .file-drop{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    text-align:center;
+    border:1.5px dashed var(--line);
+    border-radius:var(--radius-sm);
+    background:rgba(22,33,60,0.4);
+    color:var(--muted);
+    padding:22px 14px;
+    cursor:pointer;
+    font-size:13px;
+    transition:border-color .15s ease, background .15s ease, color .15s ease;
+  }
+  .file-drop svg{ color:var(--accent2); opacity:0.8; }
+  .file-drop:hover{ border-color:var(--accent); color:var(--text); background:rgba(79,140,255,0.06); }
+  .file-drop.dragover{ border-color:var(--accent2); background:rgba(45,212,200,0.1); color:var(--text); }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    background:linear-gradient(135deg, var(--accent), #3a6fe0);
+    color:#f5f9ff;
+    border:none;
+    border-radius:var(--radius-sm);
+    padding:12px 18px;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    letter-spacing:0.01em;
+    font-size:14px;
+    cursor:pointer;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 8px 22px -8px rgba(79,140,255,0.6);
+    transition:filter .15s ease, transform .12s ease, box-shadow .15s ease;
+  }
+  .btn::after{
+    content:'';
+    position:absolute; inset:0;
+    background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.28) 48%, transparent 66%);
+    transform:translateX(-120%);
+    transition:transform .5s ease;
+  }
+  .btn:hover{ filter:brightness(1.08); transform:translateY(-1px); box-shadow:0 12px 28px -8px rgba(79,140,255,0.7); }
+  .btn:hover::after{ transform:translateX(120%); }
+  .btn:active{ transform:translateY(1px); }
+  .btn-ghost{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text);
+    box-shadow:none;
+  }
+  .btn-ghost:hover{ border-color:var(--accent); color:var(--accent); }
+  .btn-danger{ background:var(--rust); color:#fff0f0; box-shadow:0 6px 18px -6px rgba(240,87,107,0.5); }
+  .btn-small{ padding:7px 12px; font-size:12px; }
+  .btn-block{ width:100%; margin-top:22px; }
+
+  .err{ color:var(--rust); font-size:13px; margin-top:10px; min-height:16px; }
+  input[type=checkbox]{
+    appearance:none; -webkit-appearance:none;
+    width:18px; height:18px;
+    border:1.5px solid var(--line);
+    border-radius:5px;
+    background:rgba(22,33,60,0.75);
+    cursor:pointer;
+    position:relative;
+    flex-shrink:0;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  input[type=checkbox]:checked{
+    background:linear-gradient(135deg, var(--accent), var(--accent2));
+    border-color:transparent;
+  }
+  input[type=checkbox]:checked::after{
+    content:'';
+    position:absolute;
+    left:5px; top:1px;
+    width:5px; height:9px;
+    border:solid #08122a;
+    border-width:0 2px 2px 0;
+    transform:rotate(45deg);
+  }
+
+  /* ---------- APP SHELL ---------- */
+  #view-app{ display:none; position:relative; }
+  @keyframes fadeInApp{
+    from{ opacity:0; transform:translateY(8px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .graffiti-wall-app{
+    position:absolute;
+    inset:-5% -10%;
+    z-index:0;
+    display:flex;
+    flex-wrap:wrap;
+    align-content:space-around;
+    justify-content:space-around;
+    transform:rotate(-7deg);
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .graffiti-wall-app span{
+    font-family:'Permanent Marker', cursive;
+    font-size:clamp(30px, 4.5vw, 56px);
+    white-space:nowrap;
+  }
+  .graffiti-wall-app span:nth-child(3n){ background:linear-gradient(90deg,#ff9f43,#ff3d81); -webkit-background-clip:text; background-clip:text; color:transparent; opacity:0.05; }
+  .graffiti-wall-app span:nth-child(3n+1){ background:linear-gradient(90deg,#4f8cff,#2dd4c8); -webkit-background-clip:text; background-clip:text; color:transparent; opacity:0.045; }
+  .graffiti-wall-app span:nth-child(3n+2){ color:#ffd27a; opacity:0.035; }
+  .hazard-stripe{
+    height:5px;
+    background:repeating-linear-gradient(135deg, #ff9f43 0 12px, #1c1440 12px 24px);
+    position:relative; z-index:1;
+  }
+  header.topbar{ position:relative; z-index:1; }
+  nav.tabs{ position:relative; z-index:1; }
+  main{ position:relative; z-index:1; }
+  header.topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 28px;
+    border-bottom:1px solid var(--line);
+    background:rgba(17,26,48,0.82);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    flex-wrap:wrap;
+    gap:12px;
+    position:sticky;
+    top:0;
+    z-index:5;
+  }
+  .identity{ display:flex; align-items:center; gap:14px; }
+  .badge{
+    background:var(--panel2);
+    border:1px solid rgba(45,212,200,0.3);
+    border-radius:8px;
+    padding:6px 10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    box-shadow:0 0 14px -4px rgba(45,212,200,0.4);
+  }
+  .name-line{ font-family:'Space Grotesk', sans-serif; font-size:18px; letter-spacing:-0.01em; font-weight:600; }
+  .name-line .grade{ color:var(--muted); font-family:'Inter'; font-size:13px; text-transform:none; letter-spacing:0; font-weight:400; }
+
+  nav.tabs{
+    display:flex;
+    gap:4px;
+    padding:0 28px;
+    background:rgba(17,26,48,0.7);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+    overflow-x:auto;
+    position:sticky;
+    top:65px;
+    z-index:4;
+  }
+  nav.tabs button{
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-family:'Space Grotesk', sans-serif;
+    letter-spacing:0.01em;
+    font-weight:500;
+    font-size:13.5px;
+    padding:14px 16px;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    white-space:nowrap;
+  }
+  nav.tabs button.active{ color:var(--accent2); border-bottom-color:var(--accent2); text-shadow:0 0 16px rgba(45,212,200,0.5); box-shadow:inset 0 -8px 12px -10px rgba(45,212,200,0.5); }
+  nav.tabs button:hover{ color:var(--text); }
+
+  main{ padding:28px; max-width:1080px; margin:0 auto; }
+  .section-title{ font-size:21px; margin-bottom:4px; font-weight:600; }
+  .tag-chip{
+    display:inline-block;
+    font-family:'Permanent Marker', cursive;
+    font-size:13px;
+    color:var(--accent2);
+    background:rgba(45,212,200,0.08);
+    border:1px solid rgba(45,212,200,0.25);
+    padding:2px 10px;
+    border-radius:20px;
+    transform:rotate(-2deg);
+    margin-bottom:8px;
+  }
+  .section-sub{ color:var(--muted); font-size:13px; margin-bottom:20px; }
+
+  .grid-2{ display:grid; grid-template-columns:340px 1fr; gap:20px; align-items:start; }
+  @media (max-width:820px){ .grid-2{ grid-template-columns:1fr; } }
+
+  .panel{
+    position:relative;
+    background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.018) 0 2px, transparent 2px 7px),
+      linear-gradient(180deg, rgba(17,26,48,0.85), rgba(17,26,48,0.85));
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(79,140,255,0.14);
+    border-radius:var(--radius);
+    padding:22px;
+    box-shadow:0 16px 40px -22px rgba(0,0,0,0.5);
+    transition:border-color .2s ease, box-shadow .2s ease;
+  }
+  .panel:hover{ border-color:rgba(79,140,255,0.28); box-shadow:0 16px 40px -18px rgba(0,0,0,0.55), 0 0 30px -16px rgba(79,140,255,0.3); }
+  .panel::before, .panel::after{
+    content:'';
+    position:absolute;
+    top:9px;
+    width:6px; height:6px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #8a97b3, #29334f 72%);
+    box-shadow:0 0 0 1px rgba(0,0,0,0.35);
+  }
+  .panel::before{ left:9px; }
+  .panel::after{ right:9px; }
+  .panel h3{ font-size:15px; margin-bottom:14px; color:var(--accent2); font-weight:600; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{
+    text-align:left;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--muted);
+    padding:9px 10px;
+    border-bottom:1px solid var(--line);
+  }
+  td{ padding:11px 10px; border-bottom:1px solid var(--line); vertical-align:middle; transition:background .15s ease; }
+  tr:last-child td{ border-bottom:none; }
+  tr:hover td{ background:rgba(79,140,255,0.06); }
+  .amount{ font-family:'JetBrains Mono', monospace; color:var(--accent2); font-weight:600; }
+  .empty{ color:var(--muted); font-size:13px; padding:24px 10px; text-align:center; }
+
+  .stamp{
+    display:inline-block;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:11px;
+    letter-spacing:0.04em;
+    font-weight:600;
+    padding:3px 10px;
+    border-radius:20px;
+    border:1px solid;
+  }
+  .stamp-paid{ color:var(--good); border-color:var(--good); background:var(--good-dim); box-shadow:0 0 14px -6px rgba(61,220,151,0.6); }
+  .stamp-pending{ color:var(--accent); border-color:var(--accent-dim); background:rgba(79,140,255,0.08); }
+
+  .week-controls{ display:flex; gap:12px; align-items:end; flex-wrap:wrap; margin-bottom:18px; }
+  .week-controls > div{ flex:1; min-width:180px; }
+
+  .footnote{ color:var(--muted); font-size:12px; margin-top:22px; line-height:1.6; }
+  .link-btn{ background:none;border:none;color:var(--rust);text-decoration:underline;cursor:pointer;font-size:12px;padding:0; }
+
+  .loading{ color:var(--muted); font-size:13px; padding:14px 0; display:flex; align-items:center; gap:10px; }
+  .spinner{
+    width:15px; height:15px;
+    border-radius:50%;
+    border:2px solid rgba(79,140,255,0.25);
+    border-top-color:var(--accent2);
+    animation:spin .7s linear infinite;
+    flex-shrink:0;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:20px; border:2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover{ background:var(--accent-dim); }
+  *{ scrollbar-color:var(--line) transparent; scrollbar-width:thin; }
+
+  body::after{
+    content:'';
+    position:fixed; inset:0;
+    pointer-events:none;
+    z-index:1000;
+    opacity:0.025;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+</style>
+</head>
+<body>
+  <div class="hazard"></div>
+  <div id="setup-banner" style="display:none; background:#3a2a12; color:#ffcf8a; padding:10px 20px; font-size:13px; text-align:center; border-bottom:1px solid #5a4420;">
+    ⚠️ Base de données partagée non configurée — les données restent pour l'instant propres à cet appareil. Voir les instructions fournies pour connecter Firebase.
+  </div>
+
+  <!-- ================= LOGIN ================= -->
+  <div id="view-login">
+    <div class="graffiti-wall" aria-hidden="true">
+      <span>LS CUSTOMS</span><span>LS CUSTOMS</span><span>LS CUSTOMS</span>
+      <span>LS CUSTOMS</span><span>LS CUSTOMS</span><span>LS CUSTOMS</span>
+      <span>LS CUSTOMS</span><span>LS CUSTOMS</span><span>LS CUSTOMS</span>
+      <span>LS CUSTOMS</span><span>LS CUSTOMS</span><span>LS CUSTOMS</span>
+    </div>
+    <div class="card login-card">
+      <div class="eyebrow">Carte de Pointage</div>
+      <h1 class="grad-text">Connexion Atelier</h1>
+      <p class="sub">Entrez votre identité pour accéder aux factures et à votre historique.</p>
+
+      <label for="in-prenom">Prénom</label>
+      <input type="text" id="in-prenom" placeholder="ex. Marc" autocomplete="off">
+
+      <label for="in-nom">Nom</label>
+      <input type="text" id="in-nom" placeholder="ex. Dupont" autocomplete="off">
+
+      <div id="employe-id-wrap">
+        <label for="in-employe-id">Identifiant (ID)</label>
+        <input type="password" id="in-employe-id" placeholder="ex. 482913" autocomplete="off">
+      </div>
+
+      <div id="patron-password-wrap" style="display:none;">
+        <label for="in-password">Mot de passe Patron</label>
+        <input type="password" id="in-password" placeholder="Mot de passe" autocomplete="off">
+      </div>
+
+      <button class="btn btn-block" id="btn-login">Se connecter</button>
+      <div class="err" id="login-err"></div>
+
+      <button type="button" id="btn-toggle-patron" style="background:none;border:none;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;padding:0;margin-top:18px;">Connexion Patron</button>
+    </div>
+    <div id="access-denied-hint" class="muted" style="display:none; position:relative; z-index:1; max-width:420px; text-align:center; font-size:12.5px; margin-top:14px;">
+      Ton nom n'est pas dans la liste des employés — demande au patron de t'ajouter.
+    </div>
+  </div>
+
+  <!-- ================= APP ================= -->
+  <div id="view-app">
+    <div class="graffiti-wall-app" aria-hidden="true">
+      <span>LS CUSTOMS</span><span>MÉCANO</span><span>LS CUSTOMS</span>
+      <span>ATELIER</span><span>LS CUSTOMS</span><span>MÉCANO</span>
+      <span>LS CUSTOMS</span><span>ATELIER</span><span>LS CUSTOMS</span>
+    </div>
+    <header class="topbar">
+      <div class="identity">
+        <span class="badge" id="hdr-initiales">--</span>
+        <div>
+          <div class="name-line"><span id="hdr-nom">—</span> <span class="grade" id="hdr-grade">—</span></div>
+        </div>
+      </div>
+      <div id="shift-control" style="display:flex; align-items:center; gap:10px;">
+        <button class="btn btn-small" id="btn-start-shift">🕐 Prendre son service</button>
+        <div id="shift-timer-wrap" style="display:none; align-items:center; gap:10px;">
+          <span class="mono" id="shift-timer" style="color:var(--accent2); font-size:15px; font-weight:600;">00:00:00</span>
+          <button class="btn btn-small btn-danger" id="btn-end-shift">Terminer le service</button>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-small" id="btn-logout">Se déconnecter</button>
+    </header>
+    <div class="hazard-stripe"></div>
+
+    <nav class="tabs">
+      <button class="active" data-tab="factures"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px;"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/><path d="M9 13h6M9 17h6"/></svg>Mes Factures</button>
+      <button data-tab="equipe" id="tab-btn-equipe" style="display:none;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Toutes les Factures</button>
+      <button data-tab="paye" id="tab-btn-paye" style="display:none;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px;"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5a2.5 2.5 0 0 1 2.5-1h.5a2 2 0 1 1 0 4h-1a2 2 0 1 0 0 4h.5a2.5 2.5 0 0 0 2.5-1"/></svg>Payes</button>
+      <button data-tab="services" id="tab-btn-services" style="display:none;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Services</button>
+      <button data-tab="employes" id="tab-btn-employes" style="display:none;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 8l-4 4-2-2"/></svg>Employés</button>
+    </nav>
+
+    <main>
+      <!-- --- MES FACTURES --- -->
+      <section id="tab-factures">
+        <span class="tag-chip">🔧 atelier</span>
+        <h2 class="section-title">Mes Factures</h2>
+        <p class="section-sub">Ajoutez chaque facture réalisée. Elle sera comptabilisée pour la paye de la semaine en cours.</p>
+
+        <div class="grid-2">
+          <div class="panel">
+            <h3>Nouvelle facture</h3>
+            <label for="f-montant">Montant ($)</label>
+            <input type="number" id="f-montant" min="0" step="0.01" placeholder="0.00">
+            <label for="f-desc">Description / Client</label>
+            <input type="text" id="f-desc" placeholder="ex. Vidange + freins — Toyota Corolla">
+            <label for="f-date">Date</label>
+            <input type="date" id="f-date">
+            <label for="f-preuve">Preuve (capture d'écran)</label>
+            <label id="file-drop-zone" for="f-preuve" class="file-drop">
+              <input type="file" id="f-preuve" accept="image/*" style="display:none;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.2"/><path d="M8 5l1.5-2h5L16 5"/></svg>
+              <span id="file-drop-text">Cliquez ou glissez une image ici</span>
+            </label>
+            <div class="muted" style="font-size:12px;margin-top:6px;">Astuce : vous pouvez aussi coller une image copiée (Ctrl+V) directement sur cette page.</div>
+            <div id="f-preuve-preview-wrap" style="display:none; margin-top:10px;">
+              <img id="f-preuve-preview" src="" alt="Aperçu de la preuve" style="max-width:100%; border-radius:4px; border:1px solid var(--line); display:block;">
+            </div>
+            <label style="display:flex; align-items:center; gap:8px; margin-top:16px; text-transform:none; letter-spacing:normal; font-size:13px; color:var(--text); cursor:pointer;">
+              <input type="checkbox" id="f-confirm" style="width:16px;height:16px;margin:0;">
+              Je certifie que le montant saisi correspond exactement à celui visible sur la preuve.
+            </label>
+            <button class="btn btn-block" id="btn-add-facture">Ajouter la facture</button>
+            <div class="err" id="facture-err"></div>
+          </div>
+
+          <div class="panel">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+              <h3 style="margin-bottom:0;">Mon historique</h3>
+              <button type="button" id="btn-toggle-mes-factures" class="link-btn" style="color:var(--accent2);">Voir tout l'historique</button>
+            </div>
+            <div id="mes-factures-week-label" class="muted mono" style="font-size:12px; margin:2px 0 12px;"></div>
+            <div id="mes-stats" style="display:none; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+              <div style="background:rgba(79,140,255,0.08); border:1px solid rgba(79,140,255,0.2); border-radius:var(--radius-sm); padding:12px 14px;">
+                <div class="muted mono" style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em;">Total facturé</div>
+                <div id="mes-stats-total" class="amount" style="font-size:19px; margin-top:4px;">$0.00</div>
+              </div>
+              <div style="background:rgba(45,212,200,0.08); border:1px solid rgba(45,212,200,0.2); border-radius:var(--radius-sm); padding:12px 14px;">
+                <div class="muted mono" style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em;">Ma part totale</div>
+                <div id="mes-stats-part" class="amount" style="font-size:19px; margin-top:4px;">$0.00</div>
+              </div>
+            </div>
+            <div id="mes-factures-wrap"><div class="loading"><span class="spinner"></span>Chargement…</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- --- TOUTES LES FACTURES (patron) --- -->
+      <section id="tab-equipe" style="display:none;">
+        <span class="tag-chip">🔧 admin</span>
+        <h2 class="section-title">Toutes les Factures</h2>
+        <p class="section-sub">Vue d'ensemble des factures saisies par l'équipe.</p>
+        <input type="text" id="search-factures" placeholder="🔎 Rechercher par employé, description ou grade..." style="margin-bottom:14px;">
+        <div id="bulk-delete-bar" style="display:none; align-items:center; gap:12px; margin-bottom:14px;">
+          <span class="muted" id="bulk-delete-count" style="font-size:13px;"></span>
+          <button class="btn btn-danger btn-small" id="btn-bulk-delete">Supprimer la sélection</button>
+        </div>
+        <div class="panel"><div id="all-factures-wrap"><div class="loading"><span class="spinner"></span>Chargement…</div></div></div>
+      </section>
+
+      <!-- --- PAYES (patron) --- -->
+      <section id="tab-paye" style="display:none;">
+        <span class="tag-chip">💵 payroll</span>
+        <h2 class="section-title">Payes de la Semaine</h2>
+        <p class="section-sub">Calcul automatique selon le pourcentage de chaque grade.</p>
+
+        <div class="week-controls">
+          <div>
+            <label for="p-week">Choisis une date dans la semaine</label>
+            <input type="date" id="p-week">
+            <div id="p-week-range" class="muted mono" style="font-size:12px; margin-top:6px;"></div>
+          </div>
+          <button class="btn" id="btn-refresh-paye">Calculer</button>
+        </div>
+
+        <div class="panel"><div id="paye-wrap"><div class="loading">Sélectionnez une semaine.</div></div></div>
+
+        <div class="footnote">
+          Taux appliqués — Apprentie 20% · Mécanicien Novice 25% · Mécanicien 30% · Mécanicien confirmé 35% · Mécanicien Expert 40% · Chef Atelier 45% · Responsable Atelier 45% · Vendeur 40% · Co-Patron 50%.
+        </div>
+      </section>
+
+      <section id="tab-services" style="display:none;">
+        <span class="tag-chip">🕐 pointage</span>
+        <h2 class="section-title">Services</h2>
+        <p class="section-sub">Qui est en service en ce moment, et l'historique des services terminés.</p>
+
+        <div class="panel" style="margin-bottom:20px;">
+          <h3>En service actuellement</h3>
+          <div id="services-active-wrap"><div class="loading"><span class="spinner"></span>Chargement…</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>Historique des services</h3>
+          <div id="services-history-wrap"><div class="loading"><span class="spinner"></span>Chargement…</div></div>
+        </div>
+      </section>
+
+      <section id="tab-employes" style="display:none;">
+        <span class="tag-chip">👤 accès</span>
+        <h2 class="section-title">Employés</h2>
+        <p class="section-sub">Seules les personnes ajoutées ici peuvent se connecter au site. Désactiver un accès empêche la personne de se reconnecter (utile en cas de départ ou renvoi).</p>
+
+        <div class="grid-2" style="margin-bottom:20px;">
+          <div class="panel">
+            <h3>Ajouter un employé</h3>
+            <label for="ne-prenom">Prénom</label>
+            <input type="text" id="ne-prenom" placeholder="ex. Marc">
+            <label for="ne-nom">Nom</label>
+            <input type="text" id="ne-nom" placeholder="ex. Dupont">
+            <label for="ne-grade">Grade</label>
+            <select id="ne-grade"></select>
+            <button class="btn btn-block" id="btn-add-employe">Ajouter l'employé</button>
+            <div class="err" id="ne-err"></div>
+          </div>
+          <div class="panel">
+            <h3>Liste des employés</h3>
+            <input type="text" id="search-employes" placeholder="🔎 Rechercher un employé..." style="margin-bottom:14px;">
+            <div id="employes-wrap"><div class="loading"><span class="spinner"></span>Chargement…</div></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="lightbox" style="display:none; position:fixed; inset:0; background:rgba(6,9,18,0.86); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:50; align-items:center; justify-content:center; padding:30px;">
+    <img id="lightbox-img" src="" alt="Preuve" style="max-width:90vw; max-height:88vh; border-radius:4px; border:1px solid var(--line); box-shadow:0 12px 40px rgba(0,0,0,0.5);">
+    <button class="btn btn-ghost btn-small" id="lightbox-close" style="position:fixed; top:20px; right:24px;">Fermer</button>
+  </div>
+
+<script>
+  const GRADES = [
+    "Apprentie","Mécanicien Novice","Mécanicien","Mécanicien confirmé",
+    "Mécanicien Expert","Chef Atelier","Responsable Atelier","Vendeur","Co-Patron","Patron"
+  ];
+  const PCT = {
+    "Apprentie":0.20,
+    "Mécanicien Novice":0.25,
+    "Mécanicien":0.30,
+    "Mécanicien confirmé":0.35,
+    "Mécanicien Expert":0.40,
+    "Chef Atelier":0.45,
+    "Responsable Atelier":0.45,
+    "Vendeur":0.40,
+    "Co-Patron":0.50,
+    "Patron":0
+  };
+  const ADMIN_GRADES = new Set(["Patron"]);
+  const VIEW_ONLY_ADMIN_GRADES = new Set(["Co-Patron"]);
+  const ADMIN_PASSWORD = "atelier2026"; // à modifier directement ici si besoin
+
+  // ---------- CONFIGURATION FIREBASE ----------
+  // Remplace les valeurs ci-dessous par celles de TON projet Firebase
+  // (Console Firebase > Paramètres du projet > Vos applications > Config SDK)
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBnQpWW1_2hLGT0R7pyDDKiRYmw0r7Q00I",
+    authDomain: "ls-customs.firebaseapp.com",
+    projectId: "ls-customs",
+    storageBucket: "ls-customs.firebasestorage.app",
+    messagingSenderId: "822800251316",
+    appId: "1:822800251316:web:ee7920fd4ab7428d919ae1"
+  };
+
+  // ---------- adaptateur de stockage local (secours, propre à cet appareil) ----------
+  function buildLocalFallback(){
+    const NS = 'atelier_fallback_';
+    function keyName(key){ return NS + 'k_' + key; }
+    function idxKey(){ return NS + 'index'; }
+    function readIndex(){
+      try{ return JSON.parse(localStorage.getItem(idxKey()) || '[]'); }catch(e){ return []; }
+    }
+    function writeIndex(arr){
+      try{ localStorage.setItem(idxKey(), JSON.stringify(arr)); }catch(e){}
+    }
+    return {
+      async get(key){
+        try{
+          const v = localStorage.getItem(keyName(key));
+          if(v===null) return null;
+          return {key, value:v, shared:true};
+        }catch(e){ return null; }
+      },
+      async set(key, value){
+        localStorage.setItem(keyName(key), value);
+        const idx = readIndex();
+        if(!idx.includes(key)){ idx.push(key); writeIndex(idx); }
+        return {key, value, shared:true};
+      },
+      async delete(key){
+        localStorage.removeItem(keyName(key));
+        writeIndex(readIndex().filter(k=>k!==key));
+        return {key, deleted:true, shared:true};
+      },
+      async list(prefix){
+        const idx = readIndex();
+        const keys = prefix ? idx.filter(k=>k.startsWith(prefix)) : idx;
+        return {keys, prefix, shared:true};
+      }
+    };
+  }
+
+  // ---------- adaptateur Firebase Firestore (base partagée, tous appareils) ----------
+  function buildFirestoreAdapter(){
+    const app = firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.firestore();
+    const COL = 'atelier_data';
+    return {
+      async get(key){
+        const doc = await db.collection(COL).doc(key).get();
+        if(!doc.exists) return null;
+        return {key, value: doc.data().value, shared:true};
+      },
+      async set(key, value){
+        await db.collection(COL).doc(key).set({ key, value });
+        return {key, value, shared:true};
+      },
+      async delete(key){
+        await db.collection(COL).doc(key).delete();
+        return {key, deleted:true, shared:true};
+      },
+      async list(prefix){
+        let q = db.collection(COL);
+        if(prefix){ q = q.where('key','>=',prefix).where('key','<', prefix + '\uf8ff'); }
+        const snap = await q.get();
+        const keys = [];
+        snap.forEach(d=> keys.push(d.id));
+        return {keys, prefix, shared:true};
+      }
+    };
+  }
+
+  let currentUser = null; // {nom, prenom, grade, slug}
+
+  const St = (function(){
+    const configured = FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey.indexOf('VOTRE_') !== 0;
+    if(configured && typeof firebase !== 'undefined'){
+      try{
+        return buildFirestoreAdapter();
+      }catch(e){
+        console.warn('Firebase indisponible, passage en stockage local.', e);
+      }
+    }
+    const banner = document.getElementById('setup-banner');
+    if(banner) banner.style.display = 'block';
+    return buildLocalFallback();
+  })();
+
+  function slugify(prenom, nom){
+    return (prenom+"-"+nom).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+  }
+  function fmt(n){ return "$"+(Math.round(n*100)/100).toFixed(2); }
+  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  function initials(prenom, nom){ return ((prenom[0]||"")+(nom[0]||"")).toUpperCase(); }
+
+  // Renvoie la date (YYYY-MM-DD) du dimanche qui démarre la semaine contenant dateStr.
+  // La semaine va donc du dimanche au samedi suivant, et se réinitialise chaque dimanche.
+  function getSundayWeekKey(dateStr){
+    const d = new Date(dateStr+"T00:00:00");
+    const dayOfWeek = d.getDay(); // 0 = dimanche
+    d.setDate(d.getDate() - dayOfWeek);
+    return d.toISOString().slice(0,10);
+  }
+  function formatWeekRange(sundayKey){
+    const start = new Date(sundayKey+"T00:00:00");
+    const end = new Date(start);
+    end.setDate(end.getDate()+6);
+    const fmtD = (dt)=> String(dt.getDate()).padStart(2,'0')+"/"+String(dt.getMonth()+1).padStart(2,'0');
+    return "Semaine du " + fmtD(start) + " au " + fmtD(end);
+  }
+
+  // ---------- init ----------
+  document.getElementById('f-date').value = todayISO();
+  document.getElementById('p-week').value = todayISO();
+
+  (function initNewEmployeGradeSelect(){
+    const sel = document.getElementById('ne-grade');
+    GRADES.filter(g=>g!=='Patron').forEach(g=>{
+      const o = document.createElement('option');
+      o.value = g; o.textContent = g + " (" + Math.round((PCT[g]||0)*100) + "%)";
+      sel.appendChild(o);
+    });
+  })();
+
+  document.getElementById('btn-add-employe').addEventListener('click', async ()=>{
+    const prenom = document.getElementById('ne-prenom').value.trim();
+    const nom = document.getElementById('ne-nom').value.trim();
+    const grade = document.getElementById('ne-grade').value;
+    const err = document.getElementById('ne-err');
+    err.style.color = '';
+    err.textContent = "";
+    if(!prenom || !nom || !grade){
+      err.textContent = "Remplis prénom, nom et grade.";
+      return;
+    }
+    const slug = slugify(prenom, nom);
+    const newId = generateEmployeeId();
+    try{
+      await St.set('employe:'+slug, JSON.stringify({ prenom, nom, grade, disabled: false, id: newId }), true);
+      document.getElementById('ne-prenom').value = '';
+      document.getElementById('ne-nom').value = '';
+      document.getElementById('ne-grade').selectedIndex = 0;
+      loadEmployes();
+      err.style.color = 'var(--accent2)';
+      err.innerHTML = `Employé ajouté ✓ — Son identifiant de connexion est <strong class="mono">${newId}</strong>. Communique-le lui, il en aura besoin pour se connecter.`;
+    }catch(e){
+      err.textContent = "Erreur lors de l'ajout, réessaie.";
+    }
+  });
+
+  // ---------- preuve (capture d'écran) ----------
+  let currentProofDataUrl = null;
+
+  function compressImage(file, maxWidth){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = (e)=>{
+        const img = new Image();
+        img.onload = ()=>{
+          const scale = Math.min(1, maxWidth / img.width);
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.72));
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleProofFile(file){
+    const err = document.getElementById('facture-err');
+    err.textContent = "";
+    if(!file) return;
+    if(!file.type || !file.type.startsWith('image/')){
+      err.textContent = "Le fichier doit être une image.";
+      return;
+    }
+    try{
+      currentProofDataUrl = await compressImage(file, 1000);
+      document.getElementById('f-preuve').value = '';
+      document.getElementById('f-preuve-preview').src = currentProofDataUrl;
+      document.getElementById('f-preuve-preview-wrap').style.display = 'block';
+      document.getElementById('file-drop-text').textContent = 'Image chargée ✓ — cliquez pour changer';
+    }catch(err2){
+      err.textContent = "Impossible de lire cette image, réessayez.";
+      currentProofDataUrl = null;
+    }
+  }
+
+  document.getElementById('f-preuve').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file){ currentProofDataUrl = null; document.getElementById('f-preuve-preview-wrap').style.display='none'; return; }
+    handleProofFile(file);
+  });
+
+  const dropZone = document.getElementById('file-drop-zone');
+  ['dragenter','dragover'].forEach(evt=>{
+    dropZone.addEventListener(evt, (e)=>{ e.preventDefault(); dropZone.classList.add('dragover'); });
+  });
+  ['dragleave','drop'].forEach(evt=>{
+    dropZone.addEventListener(evt, (e)=>{ e.preventDefault(); dropZone.classList.remove('dragover'); });
+  });
+  dropZone.addEventListener('drop', (e)=>{
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if(file) handleProofFile(file);
+  });
+
+  function resetProofField(){
+    currentProofDataUrl = null;
+    document.getElementById('f-preuve').value = '';
+    document.getElementById('f-preuve-preview-wrap').style.display = 'none';
+    document.getElementById('f-preuve-preview').src = '';
+    document.getElementById('f-confirm').checked = false;
+    document.getElementById('file-drop-text').textContent = 'Cliquez ou glissez une image ici';
+  }
+
+  document.addEventListener('paste', (e)=>{
+    if(!currentUser) return;
+    const facturesTab = document.getElementById('tab-factures');
+    if(!facturesTab || facturesTab.style.display === 'none') return;
+    const items = (e.clipboardData || window.clipboardData) ? (e.clipboardData || window.clipboardData).items : null;
+    if(!items) return;
+    for(const item of items){
+      if(item.type && item.type.indexOf('image') !== -1){
+        const blob = item.getAsFile();
+        if(!blob) continue;
+        e.preventDefault();
+        handleProofFile(blob);
+        break;
+      }
+    }
+  });
+
+  function openLightbox(src){
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').style.display = 'flex';
+  }
+  document.getElementById('lightbox-close').addEventListener('click', ()=>{
+    document.getElementById('lightbox').style.display = 'none';
+  });
+  document.getElementById('lightbox').addEventListener('click', (e)=>{
+    if(e.target.id === 'lightbox') document.getElementById('lightbox').style.display = 'none';
+  });
+
+  let patronLoginMode = false;
+  document.getElementById('btn-toggle-patron').addEventListener('click', ()=>{
+    patronLoginMode = !patronLoginMode;
+    document.getElementById('patron-password-wrap').style.display = patronLoginMode ? 'block' : 'none';
+    document.getElementById('employe-id-wrap').style.display = patronLoginMode ? 'none' : 'block';
+    document.getElementById('in-password').value = '';
+    document.getElementById('in-employe-id').value = '';
+    document.getElementById('btn-toggle-patron').textContent = patronLoginMode ? 'Connexion Employé' : 'Connexion Patron';
+    document.getElementById('login-err').textContent = '';
+  });
+
+  document.getElementById('btn-login').addEventListener('click', async ()=>{
+    const prenom = document.getElementById('in-prenom').value.trim();
+    const nom = document.getElementById('in-nom').value.trim();
+    const err = document.getElementById('login-err');
+    const hint = document.getElementById('access-denied-hint');
+    err.textContent = "";
+    hint.style.display = 'none';
+
+    if(!prenom || !nom){
+      err.textContent = "Merci de remplir prénom et nom.";
+      return;
+    }
+
+    if(patronLoginMode){
+      const pwd = document.getElementById('in-password').value;
+      if(pwd !== ADMIN_PASSWORD){
+        err.textContent = "Mot de passe Patron incorrect.";
+        return;
+      }
+      const slug = slugify(prenom, nom);
+      currentUser = {prenom, nom, grade: 'Patron', slug};
+      enterApp();
+      return;
+    }
+
+    const slug = slugify(prenom, nom);
+    let rec = null;
+    try{
+      const existing = await St.get('employe:'+slug, true);
+      if(existing && existing.value) rec = JSON.parse(existing.value);
+    }catch(e){
+      err.textContent = "Connexion impossible pour le moment, réessaie.";
+      return;
+    }
+
+    if(!rec){
+      err.textContent = "Accès refusé.";
+      hint.style.display = 'block';
+      return;
+    }
+    if(rec.disabled){
+      err.textContent = "Accès désactivé. Contacte le responsable atelier.";
+      return;
+    }
+    const enteredId = document.getElementById('in-employe-id').value.trim();
+    if(!rec.id){
+      err.textContent = "Aucun identifiant défini pour ce compte. Contacte le patron.";
+      return;
+    }
+    if(enteredId !== rec.id){
+      err.textContent = "Identifiant incorrect.";
+      return;
+    }
+
+    currentUser = {prenom: rec.prenom, nom: rec.nom, grade: rec.grade, slug};
+    enterApp();
+  });
+
+  document.getElementById('btn-logout').addEventListener('click', ()=>{
+    if(shiftTimerInterval){ clearInterval(shiftTimerInterval); shiftTimerInterval = null; }
+    shiftStart = null;
+    currentUser = null;
+    document.getElementById('view-app').style.display = 'none';
+    document.getElementById('view-login').style.display = 'flex';
+    document.getElementById('in-prenom').value = '';
+    document.getElementById('in-nom').value = '';
+    document.getElementById('in-password').value = '';
+    document.getElementById('in-employe-id').value = '';
+    document.getElementById('employe-id-wrap').style.display = 'block';
+    document.getElementById('patron-password-wrap').style.display = 'none';
+    document.getElementById('access-denied-hint').style.display = 'none';
+    patronLoginMode = false;
+    document.getElementById('btn-toggle-patron').textContent = 'Connexion Patron';
+  });
+
+  function enterApp(){
+    document.getElementById('view-login').style.display = 'none';
+    const appView = document.getElementById('view-app');
+    appView.style.display = 'block';
+    appView.style.animation = 'none';
+    void appView.offsetWidth;
+    appView.style.animation = 'fadeInApp .5s ease';
+    document.getElementById('hdr-initiales').textContent = initials(currentUser.prenom, currentUser.nom);
+    document.getElementById('hdr-nom').textContent = currentUser.prenom+" "+currentUser.nom;
+    document.getElementById('hdr-grade').textContent = currentUser.grade;
+
+    const isAdmin = ADMIN_GRADES.has(currentUser.grade); // Patron : accès complet, peut modifier
+    // Le reset hebdomadaire (dimanche → samedi) ne s'applique qu'aux employés normaux.
+    // Patron et Co-Patron voient tout leur historique par défaut.
+    mesFacturesShowAll = (currentUser.grade === 'Patron' || currentUser.grade === 'Co-Patron');
+    const isViewAdmin = isAdmin || VIEW_ONLY_ADMIN_GRADES.has(currentUser.grade); // + Co-Patron : lecture seule
+    window.canManage = isAdmin; // utilisé pour afficher/masquer les boutons de modification
+    document.getElementById('tab-btn-equipe').style.display = isViewAdmin ? 'inline-block' : 'none';
+    document.getElementById('tab-btn-paye').style.display = isViewAdmin ? 'inline-block' : 'none';
+    document.getElementById('tab-btn-services').style.display = isViewAdmin ? 'inline-block' : 'none';
+    document.getElementById('tab-btn-employes').style.display = isAdmin ? 'inline-block' : 'none';
+
+    loadMesFactures();
+    if(isViewAdmin){ loadAllFactures(); loadPaye(); loadServices(); }
+    if(isAdmin){ loadEmployes(); }
+    restoreActiveShift();
+  }
+
+  // ---------- tabs ----------
+  document.querySelectorAll('nav.tabs button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      ['factures','equipe','paye','services','employes'].forEach(t=>{
+        document.getElementById('tab-'+t).style.display = (t===btn.dataset.tab) ? 'block' : 'none';
+      });
+      if(btn.dataset.tab==='equipe') loadAllFactures();
+      if(btn.dataset.tab==='paye') loadPaye();
+      if(btn.dataset.tab==='services') loadServices();
+      if(btn.dataset.tab==='employes') loadEmployes();
+    });
+  });
+
+  // ---------- factures ----------
+  async function addFactureId(){ return 'facture:'+Date.now()+'-'+Math.random().toString(36).slice(2,8); }
+
+  document.getElementById('btn-add-facture').addEventListener('click', async ()=>{
+    const montant = parseFloat(document.getElementById('f-montant').value);
+    const desc = document.getElementById('f-desc').value.trim();
+    const date = document.getElementById('f-date').value || todayISO();
+    const err = document.getElementById('facture-err');
+    err.style.color = '';
+    err.textContent = "";
+    if(!montant || montant<=0){ err.textContent = "Entrez un montant valide."; return; }
+    if(!desc){ err.textContent = "Ajoutez une description ou un client."; return; }
+    if(!currentProofDataUrl){ err.textContent = "Ajoutez une preuve (capture d'écran) avant d'enregistrer la facture."; return; }
+    if(!document.getElementById('f-confirm').checked){ err.textContent = "Cochez la case confirmant que le montant correspond à la preuve."; return; }
+
+    const cappedNotice = montant > 160000
+      ? "Montant enregistré tel quel, mais il comptera pour $70,000 dans le calcul de la paye (dépassement de $160,000)."
+      : "";
+
+    const id = await addFactureId();
+    const payload = {
+      id, montant, desc, date,
+      prenom: currentUser.prenom, nom: currentUser.nom,
+      grade: currentUser.grade, slug: currentUser.slug,
+      createdAt: Date.now(),
+      proof: currentProofDataUrl
+    };
+    try{
+      await St.set(id, JSON.stringify(payload), true);
+      document.getElementById('f-montant').value = '';
+      document.getElementById('f-desc').value = '';
+      resetProofField();
+      loadMesFactures();
+      if(cappedNotice){ err.style.color = 'var(--accent)'; err.textContent = cappedNotice; }
+      else { err.style.color = ''; }
+    }catch(e){
+      err.style.color = '';
+      err.textContent = "Erreur lors de l'enregistrement : " + (e && e.message ? e.message : "réessayez.");
+    }
+  });
+
+  async function fetchAllFactures(){
+    const list = await St.list('facture:', true);
+    if(!list || !list.keys) return [];
+    const out = [];
+    for(const k of list.keys){
+      try{
+        const r = await St.get(k, true);
+        if(r && r.value) out.push(JSON.parse(r.value));
+      }catch(e){}
+    }
+    out.sort((a,b)=> b.createdAt - a.createdAt);
+    return out;
+  }
+
+  let mesFacturesShowAll = false;
+
+  async function loadMesFactures(){
+    const wrap = document.getElementById('mes-factures-wrap');
+    wrap.innerHTML = '<div class="loading"><span class="spinner"></span>Chargement…</div>';
+    const all = await fetchAllFactures();
+    let mine = all.filter(f=>f.slug===currentUser.slug);
+    const statsEl = document.getElementById('mes-stats');
+    const weekLabel = document.getElementById('mes-factures-week-label');
+    const toggleBtn = document.getElementById('btn-toggle-mes-factures');
+
+    if(mesFacturesShowAll){
+      weekLabel.textContent = "Historique complet (toutes les semaines)";
+      toggleBtn.textContent = "Revenir à la semaine en cours";
+    }else{
+      const currentWeekKey = getSundayWeekKey(todayISO());
+      mine = mine.filter(f=> getSundayWeekKey(f.date) === currentWeekKey);
+      weekLabel.textContent = formatWeekRange(currentWeekKey) + " — se réinitialise chaque dimanche";
+      toggleBtn.textContent = "Voir tout l'historique";
+    }
+
+    if(mine.length===0){
+      wrap.innerHTML = '<div class="empty">' + (mesFacturesShowAll ? "Aucune facture pour le moment." : "Aucune facture cette semaine.") + '</div>';
+      statsEl.style.display = 'none';
+      return;
+    }
+    const totalFacture = mine.reduce((s,f)=>s+f.montant, 0);
+    const totalPart = mine.reduce((s,f)=>s+(f.montant > 160000 ? 70000 : f.montant)*(PCT[f.grade]||0), 0);
+    document.getElementById('mes-stats-total').textContent = fmt(totalFacture);
+    document.getElementById('mes-stats-part').textContent = fmt(totalPart);
+    statsEl.style.display = 'grid';
+    let html = '<table><thead><tr><th>Date</th><th>Description</th><th>Montant</th><th>Ma part (' + Math.round((PCT[currentUser.grade]||0)*100) + '%)</th><th>Preuve</th><th></th></tr></thead><tbody>';
+    mine.forEach(f=>{
+      const pct = PCT[f.grade] || 0;
+      const effectiveMontant = f.montant > 160000 ? 70000 : f.montant;
+      html += `<tr><td class="mono">${f.date}</td><td>${escapeHtml(f.desc)}</td><td class="amount">${fmt(f.montant)}</td><td class="amount">${fmt(effectiveMontant*pct)}${f.montant > 160000 ? ' <span class="mono muted" style="font-size:10px;">(plafonné)</span>' : ''}</td>
+        <td>${f.proof ? `<img src="${f.proof}" data-src="${f.proof}" class="proof-thumb" alt="Preuve" style="width:44px;height:32px;object-fit:cover;border-radius:3px;border:1px solid var(--line);cursor:pointer;">` : '<span class="muted">—</span>'}</td>
+        <td><button class="link-btn" data-id="${f.id}">supprimer</button></td></tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('.link-btn').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        try{ await St.delete(b.dataset.id, true); loadMesFactures(); }catch(e){}
+      });
+    });
+    wrap.querySelectorAll('.proof-thumb').forEach(img=>{
+      img.addEventListener('click', ()=> openLightbox(img.dataset.src));
+    });
+  }
+  document.getElementById('btn-toggle-mes-factures').addEventListener('click', ()=>{
+    mesFacturesShowAll = !mesFacturesShowAll;
+    loadMesFactures();
+  });
+
+  let lastAllFactures = [];
+  let selectedFactureIds = new Set();
+
+  function updateBulkDeleteBar(){
+    const bar = document.getElementById('bulk-delete-bar');
+    const count = selectedFactureIds.size;
+    if(window.canManage && count > 0){
+      bar.style.display = 'flex';
+      document.getElementById('bulk-delete-count').textContent = count + " sélectionnée(s)";
+    }else{
+      bar.style.display = 'none';
+    }
+  }
+
+  function renderAllFacturesTable(){
+    const wrap = document.getElementById('all-factures-wrap');
+    const q = (document.getElementById('search-factures').value || '').toLowerCase().trim();
+    const rows = q ? lastAllFactures.filter(f=>
+      (f.prenom+" "+f.nom).toLowerCase().includes(q) ||
+      (f.desc||'').toLowerCase().includes(q) ||
+      (f.grade||'').toLowerCase().includes(q)
+    ) : lastAllFactures;
+    if(rows.length===0){ wrap.innerHTML = '<div class="empty">Aucune facture trouvée.</div>'; updateBulkDeleteBar(); return; }
+    const checkboxHeader = window.canManage ? `<th style="width:20px;"><input type="checkbox" id="select-all-factures"></th>` : '';
+    let html = '<table><thead><tr>'+checkboxHeader+'<th>Date</th><th>Employé</th><th>Grade</th><th>Description</th><th>Montant</th><th>Part employé</th><th>Preuve</th></tr></thead><tbody>';
+    rows.forEach(f=>{
+      const pct = PCT[f.grade] || 0;
+      const effectiveMontant = f.montant > 160000 ? 70000 : f.montant;
+      const checked = selectedFactureIds.has(f.id) ? 'checked' : '';
+      const checkboxCell = window.canManage ? `<td><input type="checkbox" class="row-select" data-id="${f.id}" ${checked}></td>` : '';
+      html += `<tr>${checkboxCell}<td class="mono">${f.date}</td><td>${escapeHtml(f.prenom+" "+f.nom)}</td><td>${escapeHtml(f.grade)} <span class="mono muted">(${Math.round(pct*100)}%)</span></td><td>${escapeHtml(f.desc)}</td><td class="amount">${fmt(f.montant)}</td><td class="amount">${fmt(effectiveMontant*pct)}${f.montant > 160000 ? ' <span class="mono muted" style="font-size:10px;">(plafonné)</span>' : ''}</td>
+        <td>${f.proof ? `<img src="${f.proof}" data-src="${f.proof}" class="proof-thumb" alt="Preuve" style="width:44px;height:32px;object-fit:cover;border-radius:3px;border:1px solid var(--line);cursor:pointer;">` : '<span class="muted">—</span>'}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('.proof-thumb').forEach(img=>{
+      img.addEventListener('click', ()=> openLightbox(img.dataset.src));
+    });
+    if(window.canManage){
+      wrap.querySelectorAll('.row-select').forEach(cb=>{
+        cb.addEventListener('change', ()=>{
+          if(cb.checked) selectedFactureIds.add(cb.dataset.id); else selectedFactureIds.delete(cb.dataset.id);
+          updateBulkDeleteBar();
+        });
+      });
+      const selectAll = document.getElementById('select-all-factures');
+      if(selectAll){
+        selectAll.addEventListener('change', ()=>{
+          rows.forEach(f=>{ if(selectAll.checked) selectedFactureIds.add(f.id); else selectedFactureIds.delete(f.id); });
+          renderAllFacturesTable();
+        });
+      }
+    }
+    updateBulkDeleteBar();
+  }
+  document.getElementById('search-factures').addEventListener('input', renderAllFacturesTable);
+  document.getElementById('btn-bulk-delete').addEventListener('click', async ()=>{
+    if(selectedFactureIds.size===0) return;
+    const ids = Array.from(selectedFactureIds);
+    for(const id of ids){
+      try{ await St.delete(id, true); }catch(e){}
+    }
+    selectedFactureIds.clear();
+    loadAllFactures();
+    loadMesFactures();
+  });
+
+  async function loadAllFactures(){
+    const wrap = document.getElementById('all-factures-wrap');
+    wrap.innerHTML = '<div class="loading"><span class="spinner"></span>Chargement…</div>';
+    lastAllFactures = await fetchAllFactures();
+    if(lastAllFactures.length===0){ wrap.innerHTML = '<div class="empty">Aucune facture enregistrée.</div>'; return; }
+    renderAllFacturesTable();
+  }
+
+  // ---------- paye ----------
+  document.getElementById('btn-refresh-paye').addEventListener('click', loadPaye);
+
+  async function loadPaye(){
+    const wrap = document.getElementById('paye-wrap');
+    wrap.innerHTML = '<div class="loading"><span class="spinner"></span>Calcul en cours…</div>';
+    const pickedDate = document.getElementById('p-week').value;
+    if(!pickedDate){ wrap.innerHTML = '<div class="empty">Sélectionnez une semaine.</div>'; return; }
+    const weekKey = getSundayWeekKey(pickedDate);
+    document.getElementById('p-week-range').textContent = formatWeekRange(weekKey);
+
+    const all = await fetchAllFactures();
+    const inWeek = all.filter(f=> getSundayWeekKey(f.date) === weekKey);
+
+    const bySlug = {};
+    inWeek.forEach(f=>{
+      if(!bySlug[f.slug]) bySlug[f.slug] = {prenom:f.prenom, nom:f.nom, grade:f.grade, total:0, items:[]};
+      const effectiveMontant = f.montant > 160000 ? 70000 : f.montant;
+      bySlug[f.slug].total += effectiveMontant;
+      bySlug[f.slug].grade = f.grade; // grade le plus récent dans la semaine
+      bySlug[f.slug].items.push(f);
+    });
+
+    const slugs = Object.keys(bySlug);
+    if(slugs.length===0){
+      wrap.innerHTML = '<div class="empty">Aucune facture pour cette semaine.</div>';
+      return;
+    }
+
+    // paiements déjà marqués
+    const paidList = await St.list('payroll:'+weekKey+':', true);
+    const paidMap = {};
+    if(paidList && paidList.keys){
+      for(const k of paidList.keys){
+        try{
+          const r = await St.get(k, true);
+          if(r && r.value){
+            const p = JSON.parse(r.value);
+            paidMap[p.slug] = p;
+          }
+        }catch(e){}
+      }
+    }
+
+    let html = '<table><thead><tr><th>Employé</th><th>Grade</th><th>Total factures</th><th>Taux</th><th>À payer</th><th>Statut</th><th></th></tr></thead><tbody>';
+    slugs.forEach(slug=>{
+      const e = bySlug[slug];
+      const pct = PCT[e.grade] || 0;
+      const montant = e.total * pct;
+      const paid = paidMap[slug];
+      html += `<tr>
+        <td>${escapeHtml(e.prenom+" "+e.nom)}</td>
+        <td>${escapeHtml(e.grade)}</td>
+        <td class="amount">${fmt(e.total)}</td>
+        <td class="mono">${Math.round(pct*100)}%</td>
+        <td class="amount">${fmt(paid ? paid.montant : montant)}</td>
+        <td>${paid
+            ? '<span class="stamp stamp-paid">Payée</span>'
+            : (window.canManage ? `<button class="btn btn-small" data-slug="${slug}" data-montant="${montant}">Marquer payée</button>` : '<span class="stamp stamp-pending">En attente</span>')}
+        </td>
+        <td><button class="btn btn-ghost btn-small" data-toggle-slug="${slug}">Voir factures (${e.items.length})</button></td>
+      </tr>
+      <tr class="paye-detail-row" data-detail-slug="${slug}" style="display:none;">
+        <td colspan="7" style="background:var(--panel2);">
+          <table style="width:100%;">
+            <thead><tr><th>Date</th><th>Description</th><th>Montant</th><th>Preuve</th></tr></thead>
+            <tbody>
+              ${e.items.map(f=>`<tr>
+                <td class="mono">${f.date}</td>
+                <td>${escapeHtml(f.desc)}</td>
+                <td class="amount">${fmt(f.montant)}${f.montant > 160000 ? ' <span class="mono muted" style="font-size:11px;">(compté $70,000 en paye)</span>' : ''}</td>
+                <td>${f.proof ? `<img src="${f.proof}" data-src="${f.proof}" class="proof-thumb" alt="Preuve" style="width:60px;height:44px;object-fit:cover;border-radius:3px;border:1px solid var(--line);cursor:pointer;">` : '<span class="muted">—</span>'}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll('button[data-toggle-slug]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const row = wrap.querySelector(`tr[data-detail-slug="${b.dataset.toggleSlug}"]`);
+        if(!row) return;
+        const showing = row.style.display !== 'none';
+        row.style.display = showing ? 'none' : 'table-row';
+        b.textContent = (showing ? 'Voir factures (' : 'Masquer les factures (') + bySlug[b.dataset.toggleSlug].items.length + ')';
+      });
+    });
+    wrap.querySelectorAll('.proof-thumb').forEach(img=>{
+      img.addEventListener('click', ()=> openLightbox(img.dataset.src));
+    });
+
+    wrap.querySelectorAll('button[data-slug]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        const slug = b.dataset.slug;
+        const montant = parseFloat(b.dataset.montant);
+        const e = bySlug[slug];
+        try{
+          await St.set('payroll:'+weekKey+':'+slug, JSON.stringify({
+            slug, prenom:e.prenom, nom:e.nom, grade:e.grade, montant, weekKey, paidAt: Date.now()
+          }), true);
+          loadPaye();
+        }catch(err){}
+      });
+    });
+  }
+
+  // ---------- service / minuterie ----------
+  let shiftTimerInterval = null;
+  let shiftStart = null;
+
+  function formatDuration(ms){
+    const totalSec = Math.floor(ms/1000);
+    const h = String(Math.floor(totalSec/3600)).padStart(2,'0');
+    const m = String(Math.floor((totalSec%3600)/60)).padStart(2,'0');
+    const s = String(totalSec%60).padStart(2,'0');
+    return h+":"+m+":"+s;
+  }
+
+  function tickShiftTimer(){
+    if(!shiftStart) return;
+    document.getElementById('shift-timer').textContent = formatDuration(Date.now()-shiftStart);
+  }
+
+  function showShiftRunning(start){
+    shiftStart = start;
+    document.getElementById('btn-start-shift').style.display = 'none';
+    document.getElementById('shift-timer-wrap').style.display = 'flex';
+    tickShiftTimer();
+    if(shiftTimerInterval) clearInterval(shiftTimerInterval);
+    shiftTimerInterval = setInterval(tickShiftTimer, 1000);
+  }
+
+  function showShiftStopped(){
+    shiftStart = null;
+    if(shiftTimerInterval){ clearInterval(shiftTimerInterval); shiftTimerInterval = null; }
+    document.getElementById('btn-start-shift').style.display = 'inline-flex';
+    document.getElementById('shift-timer-wrap').style.display = 'none';
+    document.getElementById('shift-timer').textContent = '00:00:00';
+  }
+
+  async function restoreActiveShift(){
+    try{
+      const r = await St.get('shift_active:'+currentUser.slug, true);
+      if(r && r.value){
+        const rec = JSON.parse(r.value);
+        showShiftRunning(rec.start);
+      }else{
+        showShiftStopped();
+      }
+    }catch(e){ showShiftStopped(); }
+  }
+
+  document.getElementById('btn-start-shift').addEventListener('click', async ()=>{
+    const rec = { slug: currentUser.slug, prenom: currentUser.prenom, nom: currentUser.nom, grade: currentUser.grade, start: Date.now() };
+    try{
+      await St.set('shift_active:'+currentUser.slug, JSON.stringify(rec), true);
+      showShiftRunning(rec.start);
+    }catch(e){}
+  });
+
+  document.getElementById('btn-end-shift').addEventListener('click', async ()=>{
+    if(!shiftStart) return;
+    const end = Date.now();
+    const duration = end - shiftStart;
+    const id = 'shift:'+Date.now()+'-'+Math.random().toString(36).slice(2,8);
+    const rec = {
+      id, slug: currentUser.slug, prenom: currentUser.prenom, nom: currentUser.nom, grade: currentUser.grade,
+      start: shiftStart, end, duration
+    };
+    try{
+      await St.set(id, JSON.stringify(rec), true);
+      await St.delete('shift_active:'+currentUser.slug, true);
+    }catch(e){}
+    showShiftStopped();
+  });
+
+  async function loadServices(){
+    const activeWrap = document.getElementById('services-active-wrap');
+    const histWrap = document.getElementById('services-history-wrap');
+    activeWrap.innerHTML = '<div class="loading"><span class="spinner"></span>Chargement…</div>';
+    histWrap.innerHTML = '<div class="loading"><span class="spinner"></span>Chargement…</div>';
+
+    // en service actuellement
+    const activeList = await St.list('shift_active:', true);
+    const activeRecs = [];
+    if(activeList && activeList.keys){
+      for(const k of activeList.keys){
+        try{
+          const r = await St.get(k, true);
+          if(r && r.value) activeRecs.push(JSON.parse(r.value));
+        }catch(e){}
+      }
+    }
+    if(activeRecs.length===0){
+      activeWrap.innerHTML = '<div class="empty">Personne en service actuellement.</div>';
+    }else{
+      let html = '<table><thead><tr><th>Employé</th><th>Grade</th><th>Depuis</th><th>Durée</th></tr></thead><tbody>';
+      activeRecs.forEach(r=>{
+        html += `<tr><td>${escapeHtml(r.prenom+" "+r.nom)}</td><td>${escapeHtml(r.grade)}</td><td class="mono">${new Date(r.start).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</td><td class="amount live-duration" data-start="${r.start}">${formatDuration(Date.now()-r.start)}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      activeWrap.innerHTML = html;
+    }
+
+    // historique
+    const histList = await St.list('shift:', true);
+    const histRecs = [];
+    if(histList && histList.keys){
+      for(const k of histList.keys){
+        try{
+          const r = await St.get(k, true);
+          if(r && r.value) histRecs.push(JSON.parse(r.value));
+        }catch(e){}
+      }
+    }
+    histRecs.sort((a,b)=> b.end - a.end);
+    if(histRecs.length===0){
+      histWrap.innerHTML = '<div class="empty">Aucun service terminé pour le moment.</div>';
+    }else{
+      let html = '<table><thead><tr><th>Employé</th><th>Grade</th><th>Date</th><th>Début</th><th>Fin</th><th>Durée</th></tr></thead><tbody>';
+      histRecs.forEach(r=>{
+        const d = new Date(r.end);
+        html += `<tr><td>${escapeHtml(r.prenom+" "+r.nom)}</td><td>${escapeHtml(r.grade)}</td><td class="mono">${d.toLocaleDateString('fr-FR')}</td><td class="mono">${new Date(r.start).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</td><td class="mono">${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</td><td class="amount">${formatDuration(r.duration)}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      histWrap.innerHTML = html;
+    }
+  }
+
+  function generateEmployeeId(){
+    return String(Math.floor(100000 + Math.random()*900000));
+  }
+
+  let lastEmployes = [];
+  function renderEmployesTable(){
+    const wrap = document.getElementById('employes-wrap');
+    const q = (document.getElementById('search-employes').value || '').toLowerCase().trim();
+    const recs = q ? lastEmployes.filter(r=> (r.prenom+" "+r.nom).toLowerCase().includes(q) || (r.grade||'').toLowerCase().includes(q)) : lastEmployes;
+    if(recs.length===0){
+      wrap.innerHTML = '<div class="empty">Aucun employé trouvé.</div>';
+      return;
+    }
+    let html = '<table><thead><tr><th>ID</th><th>Employé</th><th>Grade</th><th>Statut</th><th></th></tr></thead><tbody>';
+    recs.forEach(r=>{
+      const disabled = !!r.disabled;
+      html += `<tr>
+        <td>${r.id ? `<span class="amount mono">${r.id}</span>` : `<button class="btn btn-ghost btn-small" data-slug="${r.slug}" data-action="genid">Générer un ID</button>`}</td>
+        <td>${escapeHtml(r.prenom+" "+r.nom)}</td>
+        <td>${escapeHtml(r.grade)}</td>
+        <td>${disabled ? '<span class="stamp" style="color:var(--rust);border-color:var(--rust);background:rgba(240,87,107,0.1);">Accès désactivé</span>' : '<span class="stamp stamp-paid">Accès actif</span>'}</td>
+        <td>${disabled
+            ? `<button class="btn btn-ghost btn-small" data-slug="${r.slug}" data-action="enable">Réactiver l'accès</button>`
+            : `<button class="btn btn-danger btn-small" data-slug="${r.slug}" data-action="disable">Retirer l'accès</button>`}
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll('button[data-slug]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        const slug = b.dataset.slug;
+        const rec = lastEmployes.find(r=>r.slug===slug);
+        if(!rec) return;
+        try{
+          if(b.dataset.action==='genid'){
+            await St.set('employe:'+slug, JSON.stringify({ prenom: rec.prenom, nom: rec.nom, grade: rec.grade, disabled: !!rec.disabled, id: generateEmployeeId() }), true);
+          }else{
+            await St.set('employe:'+slug, JSON.stringify({ prenom: rec.prenom, nom: rec.nom, grade: rec.grade, disabled: b.dataset.action==='disable', id: rec.id }), true);
+          }
+          loadEmployes();
+        }catch(e){}
+      });
+    });
+  }
+  document.getElementById('search-employes').addEventListener('input', renderEmployesTable);
+
+  async function loadEmployes(){
+    const wrap = document.getElementById('employes-wrap');
+    wrap.innerHTML = '<div class="loading"><span class="spinner"></span>Chargement…</div>';
+    const list = await St.list('employe:', true);
+    const recs = [];
+    if(list && list.keys){
+      for(const k of list.keys){
+        try{
+          const r = await St.get(k, true);
+          if(r && r.value) recs.push({ slug: k.replace('employe:',''), ...JSON.parse(r.value) });
+        }catch(e){}
+      }
+    }
+    recs.sort((a,b)=> (a.nom||'').localeCompare(b.nom||''));
+    lastEmployes = recs;
+    if(recs.length===0){
+      wrap.innerHTML = '<div class="empty">Aucun employé enregistré pour le moment.</div>';
+      return;
+    }
+    renderEmployesTable();
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+</script>
+</body>
+</html>
